@@ -9,19 +9,18 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ChatServerImpl implements ChatServer {
 
   private static final int DEFAULT_PORT = 1500;
-  private Integer clientId = 0;
+  private Integer clientIdCount = 0;
   private SimpleDateFormat sdf;
   private int port;
   private boolean alive = true;
-
   private final Map<Integer, ServerThreadForClient> serverThreadForClientMap = new HashMap<>();
-  private final Map<String, Integer> usernameAndClientId = new HashMap<>();
+  private final Map<Integer, String> clientIdAndUsername = new HashMap<>();
+  private final Map<String, Set<String>> usernameAndBannedUsers = new HashMap<>();
 
   public ChatServerImpl() {
     this.port = DEFAULT_PORT;
@@ -37,12 +36,13 @@ public class ChatServerImpl implements ChatServer {
       while (alive) {
         Socket clientSocket = serverSocket.accept(); // aceptamos la coneccion de un cliente
 
-        ServerThreadForClient threadForClient = new ServerThreadForClient(clientId, clientSocket);
-        serverThreadForClientMap.put(clientId, threadForClient);
-        clientId++;
+        ServerThreadForClient threadForClient =
+            new ServerThreadForClient(clientIdCount, clientSocket);
+        serverThreadForClientMap.put(clientIdCount, threadForClient);
+        clientIdCount++;
         threadForClient.start();
 
-        System.out.printf("Establecida coneccion con clienteId: %d%n", clientId);
+        System.out.printf("Establecida coneccion con clienteId: [%d] \n", clientIdCount);
       }
 
     } catch (IOException e) {
@@ -60,7 +60,15 @@ public class ChatServerImpl implements ChatServer {
 
   @Override
   public void broadcast(ChatMessage chatMessage) {
-    serverThreadForClientMap.values().forEach(client -> client.sendMessage(chatMessage));
+    int clientId = chatMessage.getId();
+    String username = clientIdAndUsername.get(clientId);
+    Set<String> listOfBannedUsers =
+        Optional.ofNullable(usernameAndBannedUsers.get(username)).orElseGet(HashSet::new);
+
+    chatMessage.setMessage(username + ": " + chatMessage.getMessage());
+    serverThreadForClientMap.values().stream()
+        .filter(client -> !listOfBannedUsers.contains(client.getName()))
+        .forEach(client -> client.sendMessage(chatMessage));
   }
 
   @Override
@@ -72,12 +80,10 @@ public class ChatServerImpl implements ChatServer {
     private Socket threadClientSocket;
     private ObjectOutputStream objectOutputStream;
     private ObjectInputStream objectInputStream;
-    private final Map<String, Integer> bannedClients;
 
     public ServerThreadForClient(int threadClientId, Socket threadClientSocket) {
       this.threadClientId = threadClientId;
       this.threadClientSocket = threadClientSocket;
-      this.bannedClients = new HashMap<>();
       try {
         objectOutputStream = new ObjectOutputStream(threadClientSocket.getOutputStream());
         objectInputStream = new ObjectInputStream(threadClientSocket.getInputStream());
@@ -92,8 +98,8 @@ public class ChatServerImpl implements ChatServer {
       registerUsername();
 
       // recibimos los mensajes del cliente y ejecutamos la accion correspondiente
-      while (threadClientSocket.isConnected()) {
-        try {
+      try {
+        while (threadClientSocket.isConnected()) {
           ChatMessage message = (ChatMessage) objectInputStream.readObject();
           switch (message.getType()) {
             case MESSAGE:
@@ -105,18 +111,24 @@ public class ChatServerImpl implements ChatServer {
               handleLogout();
               break;
           }
-        } catch (IOException | ClassNotFoundException e) {
-          closeClientSocket();
-          throw new RuntimeException(e);
         }
+      } catch (IOException | ClassNotFoundException e) {
+        System.out.println(Arrays.toString(e.getStackTrace()));
+        closeClientSocket();
       }
     }
 
     private void closeClientSocket() {
       try {
-        objectOutputStream.close();
-        objectInputStream.close();
-        threadClientSocket.close();
+        if (objectOutputStream != null) {
+          objectOutputStream.close();
+        }
+        if (objectInputStream != null) {
+          objectInputStream.close();
+        }
+        if (threadClientSocket != null) {
+          threadClientSocket.close();
+        }
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -128,8 +140,9 @@ public class ChatServerImpl implements ChatServer {
         String[] textArray = chatMessage.getMessage().split(" ");
         if ("username".equalsIgnoreCase(textArray[0])) {
           username = textArray[1];
-          usernameAndClientId.put(textArray[1], threadClientId);
-          System.out.printf("%s se ha unido al chat\n", username);
+          clientIdAndUsername.put(threadClientId, textArray[1]);
+          System.out.printf(
+              "cliente con id [%s] username [%s] se ha unido al chat.\n", threadClientId, username);
 
           ChatMessage confirmationMessage =
               new ChatMessage(threadClientId, MESSAGE, "cliente registrado correctamente");
@@ -147,7 +160,10 @@ public class ChatServerImpl implements ChatServer {
       try {
         objectOutputStream.writeObject(chatMessage);
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        System.out.printf("Error enviando mensaje a [%s] \n", username);
+        System.out.println(e.getMessage());
+        remove(threadClientId);
+        closeClientSocket();
       }
     }
 
@@ -159,34 +175,23 @@ public class ChatServerImpl implements ChatServer {
       String[] txt = chatMessage.getMessage().split(" ");
       if (txt.length > 0) {
         if ("ban".equals(txt[0])) {
-          bannedClients.put(txt[1], chatMessage.getId());
-          System.out.printf("%s ha baneado a %s \n", username, txt[1]);
+          Set<String> bannedListForCurrentUser =
+              usernameAndBannedUsers.putIfAbsent(username, new HashSet<>());
+          // anadimos el usuario a la lista de baneados
+          bannedListForCurrentUser.add(txt[1]);
+          System.out.printf("[%s] ha baneado a [%s] \n", username, txt[1]);
           return;
         } else if ("unban".equals(txt[0])) {
-          if (bannedClients.get(txt[1]) != null) {
-            bannedClients.remove(txt[1]);
-            System.out.printf("%s ha des-baneado a %s \n", username, txt[1]);
+          Set<String> bannedListForCurrentUser =
+              usernameAndBannedUsers.putIfAbsent(username, new HashSet<>());
+          if (bannedListForCurrentUser.stream()
+              .anyMatch(bannedUser -> bannedUser.equalsIgnoreCase(txt[1]))) {
+            bannedListForCurrentUser.remove(txt[1]);
+            System.out.printf("[%s] ha des-baneado a [%s] \n", username, txt[1]);
           }
           return;
-        } else if ("broadcast".equals(txt[0])) {
-          broadcast(chatMessage);
-          return;
-        } else {
-          if (bannedClients.get(txt[0]) != null) {
-            // si el cliente objetivo esta banneado
-            return;
-          }
-          ServerThreadForClient threadForClient = serverThreadForClientMap.get(chatMessage.getId());
-          if (threadForClient == null) {
-            // cliente no registrado en el server
-            System.out.printf(
-                "El ciente %s intento enviar un mesaje a el cliente no registrado %s \n",
-                username, txt[0]);
-            return;
-          }
-          threadForClient.sendMessage(chatMessage);
-          return;
-        }
+        } else broadcast(chatMessage);
+        return;
       }
     }
   }
@@ -194,15 +199,16 @@ public class ChatServerImpl implements ChatServer {
   public static void main(String[] args) {
     ChatServer chatServer;
 
-    System.out.println("Esperando clientes.");
     // primer argumento indica el puerto donde se inicia el server
     if (args.length > 0) {
+      System.out.printf("Iniciando servidor en puerto: [%s] ...\n", args[0]);
       chatServer = new ChatServerImpl(Integer.parseInt(args[0]));
     } else {
       // si no viene argumento usamos puerto por defecto
+      System.out.printf("Iniciando servidor en puerto: [%s] ...\n", DEFAULT_PORT);
       chatServer = new ChatServerImpl();
     }
-
+    System.out.println("Esperando clientes...");
     chatServer.starup();
   }
 }

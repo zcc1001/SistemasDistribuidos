@@ -83,6 +83,11 @@ public class ChatClientImpl implements ChatClient {
     }
   }
 
+  @Override
+  public int getId() {
+    return this.id;
+  }
+
   public class ChatClientListener implements Runnable {
     @Override
     public void run() {
@@ -113,11 +118,17 @@ public class ChatClientImpl implements ChatClient {
     } else if (args.length == 1) {
       // si solo se indica un arg asumimos que es el nickname
       username = args[0];
-    } else {
-      // si se indican 2+ args reemplazamos los valores por defecto
-      // primer argumento indica el server y el segundo el nickname
-      server = args[0];
+    } else if (args.length == 2) {
+      // si se indican 2 args reemplazamos los valores por defecto
+      // primer argumento indica el puerto y el segundo el nickname
+      port = Integer.parseInt(args[0]);
       username = args[1];
+    } else {
+      // si se indican 3+ args reemplazamos los valores por defecto
+      // primer argumento indica el server ip y el segundo el puerto y el tercero el nickname
+      server = args[0];
+      port = Integer.parseInt(args[1]);
+      username = args[2];
     }
 
     System.out.printf("Bienvenido: %s \n", username);
@@ -146,7 +157,7 @@ public class ChatClientImpl implements ChatClient {
       } else {
         messageType = MESSAGE;
       }
-      ChatMessage chatMessage = new ChatMessage(0, messageType, textToSend);
+      ChatMessage chatMessage = new ChatMessage(client.getId(), messageType, textToSend);
       client.sendMessage(chatMessage);
 
       if (messageType == LOGOUT) {

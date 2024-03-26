@@ -9,4 +9,5 @@ public interface ChatClient {
 
   void disconnect();
 
+  int getId();
 }

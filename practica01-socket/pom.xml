@@ -16,15 +16,6 @@
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>
@@ -66,6 +57,56 @@
                 <plugin>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
                     <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.2.1</version>
+                    <executions>
+                        <!-- server -->
+                        <execution>
+                            <id>server</id>
+                            <goals>
+                                <goal>java</goal>
+                            </goals>
+                            <configuration>
+                                <mainClass>es.ubu.lsi.server.ChatServerImpl</mainClass>
+                                <arguments>
+                                    <argument>2000</argument>
+                                </arguments>
+                            </configuration>
+                        </execution>
+                        <!-- cliente pio -->
+                        <execution>
+                            <id>cliente-pio</id>
+                            <goals>
+                                <goal>java</goal>
+                            </goals>
+                            <configuration>
+                                <mainClass>es.ubu.lsi.client.ChatClientImpl</mainClass>
+                                <arguments>
+                                    <argument>localhost</argument>
+                                    <argument>2000</argument>
+                                    <argument>pio</argument>
+                                </arguments>
+                            </configuration>
+                        </execution>
+                        <!-- cliente blas -->
+                        <execution>
+                            <id>cliente-blas</id>
+                            <goals>
+                                <goal>java</goal>
+                            </goals>
+                            <configuration>
+                                <mainClass>es.ubu.lsi.client.ChatClientImpl</mainClass>
+                                <arguments>
+                                    <argument>localhost</argument>
+                                    <argument>2000</argument>
+                                    <argument>blas</argument>
+                                </arguments>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
