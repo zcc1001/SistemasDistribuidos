@@ -12,8 +12,8 @@ Practica 1 de la asignatura Sistemas distribuidos UBU.
 
 ## Usando maven plugins
 
-Se puede arrancar el servidor/cliente utilizando `exec-maven-plugin` para esto esta previamente configurado tres
-comandos distinto uno para el servidor y otros 2 para crear 2 clientes
+Se puede arrancar el servidor/cliente utilizando el plugin `exec-maven-plugin` para esto tenemos previamente configurado
+tres comandos distintos uno para el servidor y otros 2 para crear clientes
 
 ```shell
 # compilar generar jar
