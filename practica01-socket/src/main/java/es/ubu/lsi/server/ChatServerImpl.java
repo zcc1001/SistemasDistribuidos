@@ -11,25 +11,52 @@ import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+/** ChatServeImpl. Clase que define la logica del servidor en el chat. */
 public class ChatServerImpl implements ChatServer {
 
+  /** Perto por defecto del serviodor */
   private static final int DEFAULT_PORT = 1500;
+
+  /** Contador de id usuarios registrados */
   private Integer clientIdCount = 0;
+
+  /** date format */
   private SimpleDateFormat sdf;
+
+  /** puerto del servidor */
   private int port;
+
+  /** flag mantener vivo el hilo */
   private boolean alive = true;
+
+  /** Mapa para almacenar la relacion hilo clientId */
   private final Map<Integer, ServerThreadForClient> serverThreadForClientMap = new HashMap<>();
+
+  /** Mapa para almacenar la relacion clientId - username */
   private final Map<Integer, String> clientIdAndUsername = new HashMap<>();
+
+  /** Mapa para almacenar la lista de usuarios baneados por cada cliente */
   private final Map<String, Set<String>> usernameAndBannedUsers = new HashMap<>();
 
+  /**
+   * Constructor por defecto.
+   *
+   * @see #DEFAULT_PORT
+   */
   public ChatServerImpl() {
     this.port = DEFAULT_PORT;
   }
 
+  /**
+   * Constructor por parametros. Inicializa el servidor en el puerto dado.
+   *
+   * @param port numero de puerto
+   */
   public ChatServerImpl(int port) {
     this.port = port;
   }
 
+  /** Iniciliza la comunicacion con el cliente y los streams de datos */
   @Override
   public void starup() {
     try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -52,12 +79,18 @@ public class ChatServerImpl implements ChatServer {
     }
   }
 
+  /** Finaliza el servidor y cierra los sockets abiertos. */
   @Override
   public void shutdown() {
     alive = false;
     serverThreadForClientMap.values().forEach(ServerThreadForClient::closeClientSocket);
   }
 
+  /**
+   * Broadcast. Envia el mensaje a todos los clientes no baneados.
+   *
+   * @param chatMessage mensaje a enviar.
+   */
   @Override
   public void broadcast(ChatMessage chatMessage) {
     int clientId = chatMessage.getId();
@@ -71,16 +104,39 @@ public class ChatServerImpl implements ChatServer {
         .forEach(client -> client.sendMessage(chatMessage));
   }
 
+  /**
+   * Remove
+   *
+   * @param id id
+   */
   @Override
   public void remove(int id) {}
 
+  /**
+   * ServerTheradForClient. Clase que implementa Thread y gestiona un hilo por cliente conectado.
+   */
   public class ServerThreadForClient extends Thread {
+    /** id del cliente */
     private int threadClientId;
+
+    /** username */
     private String username;
+
+    /** socket del cliente */
     private Socket threadClientSocket;
+
+    /** stream de salida */
     private ObjectOutputStream objectOutputStream;
+
+    /** stram de entrada */
     private ObjectInputStream objectInputStream;
 
+    /**
+     * Constructor
+     *
+     * @param threadClientId id del cliente
+     * @param threadClientSocket socket asignado a el cliente
+     */
     public ServerThreadForClient(int threadClientId, Socket threadClientSocket) {
       this.threadClientId = threadClientId;
       this.threadClientSocket = threadClientSocket;
@@ -93,6 +149,7 @@ public class ChatServerImpl implements ChatServer {
       }
     }
 
+    /** Ejecuta el hilo. Registra el username del usuario y escucha los mensajes recibidos. */
     public void run() {
       // obtememos el username del cliente
       registerUsername();
@@ -118,6 +175,7 @@ public class ChatServerImpl implements ChatServer {
       }
     }
 
+    /** Cierra el socket y stream. */
     private void closeClientSocket() {
       try {
         if (objectOutputStream != null) {
@@ -134,6 +192,11 @@ public class ChatServerImpl implements ChatServer {
       }
     }
 
+    /**
+     * Registra un username en el servidor. Se asigna una tupla username, id a este usuario
+     * concreto. Usando el primer mensaje recibido como metodo de identificacion. Usando el primer
+     * mensaje recibido como metodo de identificacion.
+     */
     private void registerUsername() {
       try {
         ChatMessage chatMessage = (ChatMessage) objectInputStream.readObject();
@@ -156,6 +219,11 @@ public class ChatServerImpl implements ChatServer {
       }
     }
 
+    /**
+     * Envia mensaje. Escribe en el output stream el mensaje a enviar.
+     *
+     * @param chatMessage mensaje a enviar.
+     */
     private void sendMessage(ChatMessage chatMessage) {
       try {
         objectOutputStream.writeObject(chatMessage);
@@ -167,6 +235,7 @@ public class ChatServerImpl implements ChatServer {
       }
     }
 
+    /** Logout de usuario. cierra la coneccion y streams. */
     private void handleLogout() {
       closeClientSocket();
     }
@@ -196,6 +265,11 @@ public class ChatServerImpl implements ChatServer {
     }
   }
 
+  /**
+   * Main. Inicializa el servidor y mantiene la escucha de clientes.
+   *
+   * @param args parametros. El primer parametro indica el numero de puerto
+   */
   public static void main(String[] args) {
     ChatServer chatServer;
 

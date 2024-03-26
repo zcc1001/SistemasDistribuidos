@@ -9,25 +9,56 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
+/**
+ * ChatCLientImpl Clase que implementa ChatClient, establece las operaciones que puede realizar un
+ * cliente del chat
+ */
 public class ChatClientImpl implements ChatClient {
+  /** Valor por defecto del puerto */
   private static final int DEFAULT_PORT = 1500;
+
+  /** ip del servidor */
   private String server;
+
+  /** Username. */
   private String username;
+
+  /** puerto del servidor */
   private int port;
+
+  /** flag */
   private boolean carryOn = true;
+
+  /** identificador de cliente */
   private int id;
 
+  /** socket */
   private Socket socket;
 
+  /** stream de entrada */
   private ObjectInputStream in;
+
+  /** stream de salida */
   private ObjectOutputStream out;
 
+  /**
+   * Consturctor
+   *
+   * @param server url servidor
+   * @param port puerto del servidor
+   * @param username username
+   */
   public ChatClientImpl(String server, int port, String username) {
     this.server = server;
     this.port = port;
     this.username = username;
   }
 
+  /**
+   * Inicializa la coneccion con el servidor y crea el hilo de escucha
+   *
+   * @return void
+   */
   @Override
   public boolean start() {
     try {
@@ -57,6 +88,11 @@ public class ChatClientImpl implements ChatClient {
     }
   }
 
+  /**
+   * Envia un mensaje al servidor.
+   *
+   * @param chatMessage mensaje a enviar
+   */
   @Override
   public void sendMessage(ChatMessage chatMessage) {
     try {
@@ -66,6 +102,7 @@ public class ChatClientImpl implements ChatClient {
     }
   }
 
+  /** Desconeccion. Cierra los stream abiertos en la coneccion */
   @Override
   public void disconnect() {
     try {
@@ -83,6 +120,11 @@ public class ChatClientImpl implements ChatClient {
     }
   }
 
+  /**
+   * Obtiene el id del cliente
+   *
+   * @return id cliente
+   */
   @Override
   public int getId() {
     return this.id;
@@ -105,6 +147,11 @@ public class ChatClientImpl implements ChatClient {
     }
   }
 
+  /**
+   * Main. inicializa el cliente y captura los mensajes a ser enviados.
+   *
+   * @param args parametros de entrada.
+   */
   public static void main(String[] args) {
 
     // Valores por defecto de la coneccion
