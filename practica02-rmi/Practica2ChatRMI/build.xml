@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Practica2" default="generar" basedir=".">
+
+    <!-- Definición de propiedades -->
+    <property name="src.dir" value="src"/>
+    <property name="build.dir" value="build"/>
+    <property name="docs.dir" value="${build.dir}/docs"/>
+
+    <!-- Crear los directorios necesarios -->
+    <target name="create-folders" description="crea los directorios necesarios">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${docs.dir}"/>
+    </target>
+
+    <!-- Generar la documentación -->
+    <target name="javadoc" depends="create-folders" description="genera la documentacion">
+        <javadoc destdir="${docs.dir}" access="private">
+            <fileset dir="${src.dir}">
+                <include name="**/*.java"/>
+            </fileset>
+        </javadoc>
+    </target>
+
+    <!-- Target para realizar todas las acciones -->
+    <target name="generar" depends="create-folders,javadoc" description="ejecutar todas las acciones"/>
+
+    <!-- Limpiar directorios -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+</project>
