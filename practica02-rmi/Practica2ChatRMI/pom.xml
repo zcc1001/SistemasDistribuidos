@@ -43,7 +43,7 @@
               <target>
                 <copy todir="../Practica2ChatRMI-Web/src/main/webapp">
                   <fileset dir="./target/classes">
-                    <exclude name="**/*Dinamico.class" />
+                    <exclude name="**/*Dynamic.class" />
                   </fileset>
                 </copy>
 
@@ -60,7 +60,7 @@
         <version>3.0.2</version>
         <configuration>
           <includes>
-            <include>**/*Dinamico.*</include>
+            <include>**/*Dynamic.*</include>
           </includes>
         </configuration>
       </plugin>
