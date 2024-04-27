@@ -14,6 +14,10 @@ public class ChatClientStarter {
      */
     public ChatClientStarter(String[] args) {
         String nickname = args[0];
+        if (nickname == null || nickname.isEmpty()) {
+            System.out.println("No es posible registrar un cliente sin nickname");
+            throw new RuntimeException("ERROR: El nickname es obligatorio.");
+        }
         String serverHost = (args.length > 1) ? args[1] : "localhost";
         try {
             System.out.println("Resolviendo en: " + serverHost);
@@ -39,6 +43,7 @@ public class ChatClientStarter {
                     ChatMessage chatMessage = new ChatMessage(client.getId(), client.getNickName(), textToSend);
                     server.publish(chatMessage);
                 }
+                System.out.println(" ");
             }
 
         } catch (Exception e) {
