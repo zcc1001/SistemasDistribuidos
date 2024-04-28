@@ -14,8 +14,7 @@ public class ChatServerDynamic {
     /**
      * Método raíz.
      *
-     * @param args
-     *            argumentos
+     * @param args argumentos
      */
     public static void main(String args[]) {
 

@@ -4,11 +4,17 @@ import es.ubu.lsi.client.ChatClient;
 import es.ubu.lsi.common.ChatMessage;
 
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-public class ChatServerImpl implements ChatServer {
+public class ChatServerImpl extends UnicastRemoteObject implements ChatServer {
+    private static final long serialVersionUID = 1234L;
     private final Map<Integer, ChatClient> clients;
+    private final Map<String, Integer> clientsNicnamesAndIds;
+    private final Map<Integer, Set<String>> bannedUsersByClient;
     private int clientIdCounter = 0;
 
     /**
@@ -16,6 +22,8 @@ public class ChatServerImpl implements ChatServer {
      */
     public ChatServerImpl() throws RemoteException {
         super();
+        this.clientsNicnamesAndIds = new HashMap<>();
+        this.bannedUsersByClient = new HashMap<>();
         this.clients = new HashMap<>();
     }
 
@@ -30,9 +38,10 @@ public class ChatServerImpl implements ChatServer {
     public int checkIn(ChatClient client) throws RemoteException {
         client.setId(clientIdCounter++);
         clients.put(client.getId(), client);
+        clientsNicnamesAndIds.put(client.getNickName(), client.getId());
+        bannedUsersByClient.put(client.getId(), new HashSet<>());
 
-        System.out.println(
-                String.format("Client: [%s] id: [%d] registrado correctamente.  \n \n", client.getNickName(), client.getId()));
+        System.out.printf("Client: [%s] id: [%d] registrado correctamente.%n", client.getNickName(), client.getId());
         return client.getId();
     }
 
@@ -55,11 +64,30 @@ public class ChatServerImpl implements ChatServer {
      */
     @Override
     public void publish(ChatMessage msg) throws RemoteException {
+        ChatClient chatClient = clients.get(msg.getId());
+
+        // Comandos de baneo
+        Set<String> clientsToBan = this.bannedUsersByClient.getOrDefault(msg.getId(), new HashSet<>());
+        String[] textArray = msg.getMessage().split(" ", 2);
+        if ("ban".equalsIgnoreCase(textArray[0])) {
+            clientsToBan.add(textArray[1].trim());
+            System.out.printf("Cliente: [%s] ha baneado a [%s]%n", chatClient.getNickName(), textArray[1]);
+            return;
+        } else if ("unban".equalsIgnoreCase(textArray[0])) {
+            clientsToBan.remove(textArray[1].trim());
+            System.out.printf("Cliente: [%s] ha des-baneado a [%s]%n", chatClient.getNickName(), textArray[1]);
+            return;
+        }
+
+        // envio de mensajes
         for (ChatClient c : clients.values()) {
-            if (c.getId() != msg.getId()) {
+            Set<String> bannedForActualClient = bannedUsersByClient.get(c.getId());
+            if (!bannedForActualClient.contains(msg.getNickname()) && c.getId() != msg.getId()) {
                 c.receive(msg);
+                System.out.printf("[%s] envia mensaje al cliente [%s]...%n", chatClient.getNickName(), c.getNickName());
+            } else {
+                System.out.printf("[%s] baneado [%s]...%n", chatClient.getNickName(), c.getNickName());
             }
-            System.out.println(String.format("Enviando mensaje al cliente [%s]...", c.getNickName()));
         }
     }
 
