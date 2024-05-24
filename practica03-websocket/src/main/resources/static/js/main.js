@@ -75,11 +75,11 @@ function onMessageReceived(payload) {
 
     var messageElement = document.createElement('li');
 
-    if (message.type === 'REGISTER') {
+    if (message.text === 'REGISTER') {
         messageElement.classList.add('event-message');
         message.text = message.from + ' joined!';
         userLevel = message.from_level
-    } else if (message.type === 'LEAVE') {
+    } else if (message.text === 'LEAVE') {
         messageElement.classList.add('event-message');
         message.text = message.from + ' left!';
     } else {
