@@ -13,11 +13,21 @@ public class WebSocketEventListener {
 
   private final MessageSendingOperations messageSendingOperations;
 
+  /**
+   * Constructor e injecta las calases pasadas por parametro
+   *
+   * @param messageSendingOperations
+   */
   @Autowired
   public WebSocketEventListener(MessageSendingOperations messageSendingOperations) {
     this.messageSendingOperations = messageSendingOperations;
   }
 
+  /**
+   * Metodo que maneja el evento de desconeccion de un usuario
+   *
+   * @param event
+   */
   @EventListener
   public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
     StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());

@@ -19,11 +19,22 @@ public class UserService {
   private final ResourceLoader resourceLoader;
   private final Map<String, User> users = new HashMap<>();
 
+  /**
+   * Constructor inyecta beans pasados
+   *
+   * @param resourceLoader
+   */
   @Autowired
   public UserService(ResourceLoader resourceLoader) {
     this.resourceLoader = resourceLoader;
   }
 
+  /**
+   * Funcion que inicializa el servicio cargando los datos de usuarios desde un csv
+   *
+   * @throws IOException
+   * @throws CsvException
+   */
   @PostConstruct
   public void init() throws IOException, CsvException {
     Resource resource = resourceLoader.getResource("classpath:users_db.csv");
@@ -40,6 +51,13 @@ public class UserService {
     }
   }
 
+  /**
+   * Funcion que encuentra un usuario dado un nombre y password
+   *
+   * @param from
+   * @param text
+   * @return
+   */
   public User findUser(String from, String text) {
     User user = users.get(from);
     if (user != null && user.getPassword().equals(text)) {

@@ -3,8 +3,6 @@ package es.ubu.lsi.controller;
 import es.ubu.lsi.model.Message;
 import es.ubu.lsi.model.User;
 import es.ubu.lsi.service.UserService;
-import java.util.HashMap;
-import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -17,11 +15,23 @@ public class ChatController {
 
   private final UserService userService;
 
+  /**
+   * Cosntructor que injecta beans pasados
+   *
+   * @param userService
+   */
   @Autowired
   public ChatController(UserService userService) {
     this.userService = userService;
   }
 
+  /**
+   * Endpoint para registra un usuario en el chat
+   *
+   * @param message
+   * @param headerAccessor
+   * @return
+   */
   @MessageMapping("/chat/register")
   @SendTo("/topic/public")
   public Message register(
@@ -38,6 +48,12 @@ public class ChatController {
     return responseMessage;
   }
 
+  /**
+   * Endpoint para enviar mensajes al chat
+   *
+   * @param message
+   * @return
+   */
   @MessageMapping("/chat/send")
   @SendTo("/topic/public")
   public Message sendMessage(@Payload final Message message) {

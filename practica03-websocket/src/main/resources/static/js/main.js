@@ -11,7 +11,7 @@ var connectingElement = document.querySelector('.connecting');
 var stompClient = null;
 var username = null;
 var password = null;
-var userLeve = null;
+var userLevel = null;
 
 var colors = [
     '#2196F3', '#32c787', '#00BCD4', '#ff5652',
@@ -38,9 +38,6 @@ function connect(event) {
 function onConnected() {
     // Subscribe to the Public Topic
     stompClient.subscribe('/topic/public', onMessageReceived);
-    stompClient.subscribe('/topic/level_1', onMessageReceived);
-    stompClient.subscribe('/topic/level_2', onMessageReceived);
-    stompClient.subscribe('/topic/level_3', onMessageReceived);
 
     // Tell your username to the server
     stompClient.send("/app/chat/register",
@@ -81,6 +78,7 @@ function onMessageReceived(payload) {
     if (message.type === 'REGISTER') {
         messageElement.classList.add('event-message');
         message.text = message.from + ' joined!';
+        userLevel = message.from_level
     } else if (message.type === 'LEAVE') {
         messageElement.classList.add('event-message');
         message.text = message.from + ' left!';
