@@ -12,6 +12,7 @@ var stompClient = null;
 var username = null;
 var password = null;
 var userLevel = null;
+var onlyMyLevel = false;
 
 var colors = [
     '#2196F3', '#32c787', '#00BCD4', '#ff5652',
@@ -83,6 +84,9 @@ function onMessageReceived(payload) {
         messageElement.classList.add('event-message');
         message.text = message.from + ' left!';
     } else {
+        if (onlyMyLevel && message.from_level !== userLevel) {
+           return;
+        }
         messageElement.classList.add('chat-message');
 
         var avatarElement = document.createElement('i');
@@ -116,6 +120,19 @@ function getAvatarColor(messageSender) {
     }
     var index = Math.abs(hash % colors.length);
     return colors[index];
+}
+
+function filterMessages() {
+
+    var checkBox = document.getElementById("leveFilter");
+
+    if (checkBox.checked === true){
+        console.log("cambio de filtro de nivel a true")
+        onlyMyLevel = false;
+    } else {
+        console.log("cambio de filtro de nivel a false")
+        onlyMyLevel = false;
+    }
 }
 
 usernameForm.addEventListener('submit', connect, true)

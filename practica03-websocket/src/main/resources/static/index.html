@@ -16,11 +16,12 @@
         <form id="usernameForm" name="usernameForm">
             <div class="form-group">
                 <input type="text" id="name" placeholder="Username" autocomplete="off" class="form-control"/>
-                <input type="text" id="password" placeholder="password" autocomplete="off" class="form-control"/>
+                <input type="password" id="password" placeholder="password" autocomplete="off" class="form-control"/>
             </div>
             <div class="form-group">
                 <button type="submit" class="accent username-submit">Chatting</button>
             </div>
+
         </form>
     </div>
 </div>
@@ -43,7 +44,12 @@
                            class="form-control"/>
                     <button type="submit" class="primary">Send</button>
                 </div>
+                <div class="clearfix">
+                    <input type="checkbox" id="leveFilter" name="leveFilter" onchange="filterMessages(this)">
+                    <label for="leveFilter"><span>No recibir mensajes de niveles inferiores</span></label>
+                </div>
             </div>
+
         </form>
     </div>
 </div>
